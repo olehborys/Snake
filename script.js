@@ -42,122 +42,161 @@ gameContainer.addEventListener('touchmove', handleTouchMove);
 
 let xDown = null;
 let yDown = null;
-
-function handleTouchStart(event) {
-  const firstTouch = event.touches[0];
-  xDown = firstTouch.clientX;
-  yDown = firstTouch.clientY;
-}
-
-function handleTouchMove(event) {
-  if (!xDown || !yDown) {
-    return;
-const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
-
-const TILE_SIZE = 10;
-const BOARD_WIDTH = 40;
-const BOARD_HEIGHT = 40;
-const CANVAS_WIDTH = TILE_SIZE * BOARD_WIDTH;
-const CANVAS_HEIGHT = TILE_SIZE * BOARD_HEIGHT;
-
-let snake = [{ x: 5, y: 5 }];
-let food = { x: 10, y: 10 };
-let dx = TILE_SIZE;
+// Game constants and variables
+const gameBoard = document.getElementById('game-board');
+const width = gameBoard.offsetWidth;
+const height = gameBoard.offsetHeight;
+const tileSize = 10;
+const rows = height / tileSize;
+const cols = width / tileSize;
+let snake = [{x: cols/2, y: rows/2}];
+let dx = 1;
 let dy = 0;
+let foodX;
+let foodY;
 let score = 0;
-let gameIsRunning = true;
+let intervalId;
 
-function drawSnakePart(snakePart) {
-  ctx.fillStyle = 'green';
-  ctx.fillRect(snakePart.x * TILE_SIZE, snakePart.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-}
-
-function drawSnake() {
-  snake.forEach(drawSnakePart);
-}
-
-function moveSnake() {
-  const head = { x: snake[0].x + dx, y: snake[0].y + dy };
-  snake.unshift(head);
-  if (head.x === food.x && head.y === food.y) {
-    score++;
-    generateFood();
-  } else {
-    snake.pop();
-  }
-}
-
-function generateFood() {
-  food = {
-    x: Math.floor(Math.random() * BOARD_WIDTH),
-    y: Math.floor(Math.random() * BOARD_HEIGHT)
-  };
-}
-
-function drawFood() {
-  ctx.fillStyle = 'red';
-  ctx.fillRect(food.x * TILE_SIZE, food.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-}
-
-function drawScore() {
-  ctx.font = '16px Arial';
-  ctx.fillStyle = 'black';
-  ctx.fillText(`Score: ${score}`, 10, 20);
-}
-
-function clearCanvas() {
-  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-}
-
-function draw() {
-  clearCanvas();
+// Initialize the game
+function init() {
+  // Add the snake to the game board
   drawSnake();
-  drawFood();
-  drawScore();
+  
+  // Add the first food to the game board
+  generateFood();
+  
+  // Start the game loop
+  intervalId = setInterval(gameLoop, 100);
+}
+
+// Generate a new food position
+function generateFood() {
+  foodX = Math.floor(Math.random() * cols) + 1;
+  foodY = Math.floor(Math.random() * rows) + 1;
+  
+  // Check if the food is on top of the snake
+  if (snake.some(segment => segment.x === foodX && segment.y === foodY)) {
+    generateFood();
+  }
+  
+  // Add the food to the game board
+  const foodElement = document.createElement('div');
+  foodElement.style.gridRowStart = foodY;
+  foodElement.style.gridColumnStart = foodX;
+  foodElement.classList.add('food');
+  gameBoard.appendChild(foodElement);
+}
+
+// Main game loop
+function gameLoop() {
+  // Move the snake
   moveSnake();
-  checkCollision();
+  
+  // Check for collision with walls
+  if (snake[0].x < 1 || snake[0].x > cols || snake[0].y < 1 || snake[0].y > rows) {
+    clearInterval(intervalId);
+    alert(`Game over! Your score is ${score}.`);
+  }
+  
+  // Check for collision with food
+  if (snake[0].x === foodX && snake[0].y === foodY) {
+    // Increase the score and update the score display
+    score++;
+    document.getElementById('score').textContent = score;
+    
+    // Remove the old food from the game board
+    gameBoard.removeChild(gameBoard.querySelector('.food'));
+    
+    // Add a new segment to the snake
+    const tail = snake[snake.length - 1];
+    snake.push({x: tail.x - dx, y: tail.y - dy});
+    
+    // Generate a new food
+    generateFood();
+  }
+  
+  // Check for collision with the rest of the snake
+  if (snake.slice(1).some(segment => segment.x === snake[0].x && segment.y === snake[0].y
+)) {
+clearInterval(intervalId);
+alert(`Game over! Your score is ${score}.`);
+    
 }
 
-function checkCollision() {
-  const head = snake[0];
-  if (head.x < 0 || head.x >= BOARD_WIDTH || head.y < 0 || head.y >= BOARD_HEIGHT) {
-    endGame();
-  }
-  for (let i = 1; i < snake.length; i++) {
-    if (head.x === snake[i].x && head.y === snake[i].y) {
-      endGame();
-    }
-  }
+// Redraw the snake
+drawSnake();
 }
 
-function endGame() {
-  gameIsRunning = false;
-  alert(`Game Over! Your score is ${score}.`);
+// Move the snake
+function moveSnake() {
+// Move the head of the snake
+snake[0].x += dx;
+snake[0].y += dy;
+
+// Move the rest of the snake
+for (let i = snake.length - 1; i > 0; i--) {
+snake[i].x = snake[i - 1].x;
+snake[i].y = snake[i - 1].y;
+}
 }
 
-function handleOrientation(event) {
-  if (!gameIsRunning) {
-    return;
-  }
-  const { gamma, beta } = event;
-  if (gamma > 0) {
-    dx = TILE_SIZE;
-    dy = 0;
-} else {
-dx = -TILE_SIZE;
+// Draw the snake on the game board
+function drawSnake() {
+
+  // Remove the old snake segments from the game board
+gameBoard.querySelectorAll('.snake').forEach(segment => segment.remove());
+
+// Draw the new snake segments on the game board
+snake.forEach(segment => {
+const snakeElement = document.createElement('div');
+snakeElement.style.gridRowStart = segment.y;
+snakeElement.style.gridColumnStart = segment.x;
+snakeElement.classList.add('snake');
+gameBoard.appendChild(snakeElement);
+});
+}
+
+// Handle sensor input
+function handleSensorInput(event) {
+const {x, y, z} = event.accelerationIncludingGravity;
+
+// Check if the device is tilted enough to move the snake horizontally
+if (Math.abs(x) > Math.abs(y) && Math.abs(x) > 5) {
+if (x > 0) {
+// Move the snake right
+if (dx === 0) {
+dx = 1;
 dy = 0;
 }
-if (beta > 0) {
-dx = 0;
-dy = TILE_SIZE;
 } else {
+// Move the snake left
+if (dx === 0) {
+dx = -1;
+dy = 0;
+}
+}
+}
+
+// Check if the device is tilted enough to move the snake vertically
+if (Math.abs(y) > Math.abs(x) && Math.abs(y) > 5) {
+if (y > 0) {
+// Move the snake down
+if (dy === 0) {
 dx = 0;
-dy = -TILE_SIZE;
+dy = 1;
+}
+} else {
+// Move the snake up
+if (dy === 0) {
+dx = 0;
+dy = -1;
+}
+}
 }
 }
 
-generateFood();
+// Add an event listener for sensor input
+window.addEventListener('devicemotion', handleSensorInput);
 
-window.addEventListener('deviceorientation', handleOrientation);
-setInterval(draw, 100);
+// Start the game
+init();
