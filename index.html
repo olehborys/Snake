@@ -2,10 +2,150 @@
 <html>
   <head>
     <title>Sensor Snake Game</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+      /* Styling for the game board */
+      #game-board {
+        display: grid;
+        grid-template-columns: repeat(20, 1fr);
+        grid-template-rows: repeat(20, 1fr);
+        width: 300px;
+        height: 300px;
+        margin: 0 auto;
+        border: 2px solid black;
+        background-color: lightgray;
+      }
+      
+      /* Styling for the snake */
+      .snake {
+        background-color: green;
+      }
+      
+      /* Styling for the food */
+      .food {
+        background-color: red;
+      }
+    </style>
   </head>
   <body>
     <div id="game-board"></div>
-    <script src="script.js"></script>
+    
+    <script>
+      // Set up the game board and snake
+      const gameBoard = document.getElementById('game-board');
+      let snake = [{x: 10, y: 10}];
+      let dx = 0;
+      let dy = 0;
+      let food = null;
+      let score = 0;
+      let intervalId = null;
+      
+      // Initialize the game
+      function init() {
+        // Generate the food
+        generateFood();
+        
+        // Set up the game loop
+        intervalId = setInterval(() => {
+          moveSnake();
+          updateGame();
+        }, 100);
+      }
+      
+      // Generate a new food element
+      function generateFood() {
+        // Remove any existing food elements
+        gameBoard.querySelectorAll('.food').forEach(food => food.remove());
+        
+        // Generate a new food element at a random location on the game board
+        const foodX = Math.floor(Math.random() * 20) + 1;
+        const foodY = Math.floor(Math.random() * 20) + 1;
+        const foodElement = document.createElement('div');
+        foodElement.style.gridColumnStart = foodX;
+        foodElement.style.gridRowStart = foodY;
+        foodElement.classList.add('food');
+        gameBoard.appendChild(foodElement);
+        food = {x: foodX, y: foodY};
+      }
+      
+      // Update the game state and redraw the game board
+      function updateGame() {
+        // Check if the snake has collided with the food
+        if (snake[0].x === food.x && snake[0].y === food.y) {
+          // Increase the score
+          score += 10;
+          
+          // Generate a new food element
+          generateFood();
+          
+          // Add a new segment to the snake
+          snake.push({x: snake[snake.length - 1].x, y: snake[snake.length - 1].y});
+        }
+        
+        // Check if the snake has collided with a wall or with itself
+        if (snake[0].x < 1 || snake[0].x > 20 || snake[0].y < 1 || snake[0].y > 20) {
+          clearInterval(intervalId);
+          alert(`Game over! Your score is ${score}.`);
+        }
+        for (let i = 1; i < snake.length; i++) {
+          if (snake[0].x === snake[i].x && snake[0].y === snake[i].y) {
+            clearInterval(intervalId);
+            alert(`Game over! Your score is ${score}.`);
+          }
+        }
+        
+        // Redraw the snake
+        drawSnake();
+      }
+      
+      // Move the snake
+      function moveSnake() {
+        // Move the head of the snake
+        snake[        0].x += dx;
+        snake[0].y += dy;
+        
+        // Move the rest of the snake segments
+        for (let i = snake.length - 1; i > 0; i--) {
+          snake[i].x = snake[i - 1].x;
+          snake[i].y = snake[i - 1].y;
+        }
+      }
+      
+      // Draw the snake on the game board
+      function drawSnake() {
+        // Remove any existing snake elements
+        gameBoard.querySelectorAll('.snake').forEach(snake => snake.remove());
+        
+        // Draw the snake on the game board
+        snake.forEach(segment => {
+          const segmentElement = document.createElement('div');
+          segmentElement.style.gridColumnStart = segment.x;
+          segmentElement.style.gridRowStart = segment.y;
+          segmentElement.classList.add('snake');
+          gameBoard.appendChild(segmentElement);
+        });
+      }
+      
+      // Handle device orientation changes
+      window.addEventListener('deviceorientation', event => {
+        // Set the snake's movement direction based on the device orientation
+        if (event.beta > 0) {
+          dx = 1;
+          dy = 0;
+        } else if (event.beta < 0) {
+          dx = -1;
+          dy = 0;
+        } else if (event.gamma > 0) {
+          dx = 0;
+          dy = 1;
+        } else if (event.gamma < 0) {
+          dx = 0;
+          dy = -1;
+        }
+      });
+      
+      // Start the game
+      init();
+    </script>
   </body>
 </html>
+
