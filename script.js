@@ -143,4 +143,21 @@ function handleOrientation(event) {
   const { gamma, beta } = event;
   if (gamma > 0) {
     dx = TILE_SIZE;
-    dy = 
+    dy = 0;
+} else {
+dx = -TILE_SIZE;
+dy = 0;
+}
+if (beta > 0) {
+dx = 0;
+dy = TILE_SIZE;
+} else {
+dx = 0;
+dy = -TILE_SIZE;
+}
+}
+
+generateFood();
+
+window.addEventListener('deviceorientation', handleOrientation);
+setInterval(draw, 100);
