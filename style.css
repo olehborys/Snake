@@ -1,9 +1,20 @@
-body {
-  margin: 0;
-  padding: 0;
+#game-board {
+  width: 400px;
+  height: 400px;
+  border: 1px solid black;
 }
 
-canvas {
-  display: block;
-  margin: 0 auto;
+.snake {
+  width: 10px;
+  height: 10px;
+  background-color: green;
+  position: absolute;
 }
+
+.food {
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  position: absolute;
+}
+
